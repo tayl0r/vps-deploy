@@ -1,0 +1,9 @@
+# The VPS's SSH host keys, under the alias "vps" (the action passes HostKeyAlias=vps), so the server's
+# address stays out of this repo. They are public keys. A change lands in a reviewed diff and reaches an
+# app only when that app bumps its pin. Read on 2026-11-11 from the server's
+# /etc/ssh/ssh_host_{ed25519,rsa}_key.pub over the admin's already-pinned connection; they match the
+# host keys another app repo pinned on 2026-11-08. Fingerprints:
+#   SHA256:n6frmO6h7+1Vbo5dbGWCrO7xkL8cAF1rvFo9VyrvY/0 (ED25519)
+#   SHA256:jhsaU7XPQ8/9NS5LK01AiimgDfT22SJuF1FvJ/eRjY0 (RSA)
+vps ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ8rRK25mR681poVoBUvpyrO6Awy+R5/1j5o/X4pQSdJ
+vps ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDDFQhSNM7l5oSYaMomxdO044s3WFRTUD2m8cGlVS/s+SrrkUcuSZWepwGcLBH4taLNFmaAA6tBkt61ujxJ4Sh2D4TQ1nxBjcQL4D6gciCYx7LJffvSKAbcJyDGVAkh/g1wAwwS0u6VIKxi237tnoqV8g/yZxKvHblXJJe1KJ8NmR0zOszmuEPi1rW38KuSJccLOS/nLGJSuyerMYr7UJGpH8hf1p1zqVPEn5p+HKsfne/77R7Athnf8LJ0RvvO9U15EwRKLh7nOa7wGfMnXUVDaQB8eeuGyKOiDO3JYGDch6l/JyCaDxH+FvZYqcKlOKPMQgsQwPTKmd5MjN/FgTwlnaBAL4jowsrZAkgYi/ZAWJ72oJRtd065pmjmAbTDyH3tA2Idml1zGcYtFvkhlI4EzIoqhAy9BJleXHPLboLcNhcbTlTRE+FVQQ3JagC4vKGkevHwv0L0D6CeRuqQVKKtI5NdfQpbHLdpoHIiWXTwxcLrFmOwWpL9QPeR/CRkcBk=
