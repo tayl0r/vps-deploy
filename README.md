@@ -43,7 +43,7 @@ reading the diff since your current one: this action runs with your deploy key.
 | `user` | yes | The app's deploy account on the server (from a secret) |
 | `host` | yes | The server's address (from a secret) |
 | `target` | yes | The deployment to update: `<app>` (prod) or `<app>-dev` |
-| `compose` | no | Path to the repo's compose for this deployment; its SHA-256 is sent so the server can refuse a deploy when its own copy differs. Required for an app whose repo keeps its compose |
+| `compose` | no | Path, from the repository root (a `working-directory` default doesn't apply to it), to the repo's compose for this deployment; its SHA-256 is sent so the server can refuse a deploy when its own copy differs. Required for an app whose repo keeps its compose |
 | `token` | no | Registry token the server pulls with (default: the run's `github.token`) |
 | `actor` | no | Registry user (default: `github.actor`) |
 
@@ -52,11 +52,11 @@ reading the diff since your current one: this action runs with your deploy key.
 | Exit | Meaning |
 |---|---|
 | 0 | Deployed |
-| 1 | The deploy failed on the server; its output above names the log kept there |
-| 2 | The deploy gate refused the command: wrong target, or a missing compose checksum |
+| 1 | The deploy didn't happen or failed. The message above says why: the action's own input check, the gate (for example, no compose checksum from an app that needs one), or the deploy itself, with the path of its log on the server |
+| 2 | The deploy gate refused the command: `target` isn't one of this app's deployments |
 | 3 | Compose drift: the server's compose differs from the repo's. Its admin installs the repo's copy, then the deploy is re-run |
 | 75 | Another deploy of the same deployment ran for more than 10 minutes |
-| 255 | SSH failed: connection, host key or deploy key |
+| 255 | SSH failed: connection, host key or deploy key. If the gate had already printed its `deploying` line, the deploy continues on the server without the job |
 
 Each failure also prints one `::error` annotation saying which of these it was. A started deploy finishes
 on the server even if the job is cancelled.

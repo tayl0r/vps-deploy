@@ -5,7 +5,7 @@ inputs:
   user:    { description: "The app's deploy account (a secret)", required: true }
   host:    { description: "The VPS address (a secret)", required: true }
   target:  { description: "The deployment to update: <app> (prod) or <app>-dev", required: true }
-  compose: { description: "Path to the repo's compose for this deployment; required for an app whose repo keeps one", required: false, default: "" }
+  compose: { description: "Path, from the repository root, to the repo's compose for this deployment; required for an app whose repo keeps one", required: false, default: "" }
   token:   { description: "Registry token the VPS pulls with", required: false, default: "${{ github.token }}" }
   actor:   { description: "Registry user", required: false, default: "${{ github.actor }}" }
 runs:

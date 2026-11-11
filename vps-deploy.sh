@@ -4,10 +4,10 @@
 # The server decides everything else. Inputs arrive as VPS_* environment variables (see action.yml).
 set -euo pipefail
 
-for v in VPS_DEPLOY_KEY VPS_DEPLOY_USER VPS_HOST VPS_TARGET VPS_TOKEN VPS_ACTOR VPS_KNOWN_HOSTS; do
+for v in VPS_DEPLOY_KEY VPS_DEPLOY_USER VPS_HOST VPS_TARGET VPS_TOKEN VPS_ACTOR; do
   if [ -z "${!v:-}" ]; then echo "::error title=VPS deploy::$v is empty"; exit 1; fi
 done
-target_re='^[a-z0-9-]+$'
+target_re='^[a-z0-9-]{1,64}$'   # the gate's own form
 if ! [[ $VPS_TARGET =~ $target_re ]]; then echo "::error title=VPS deploy::target must be <app> or <app>-dev"; exit 1; fi
 if [ ! -s "$VPS_KNOWN_HOSTS" ]; then echo "::error title=VPS deploy::no pinned host keys at $VPS_KNOWN_HOSTS"; exit 1; fi
 
@@ -17,7 +17,8 @@ if [ -n "${VPS_COMPOSE:-}" ]; then
   cmd+=" $(sha256sum -- "$VPS_COMPOSE" | cut -d' ' -f1)"
 fi
 
-dir=$(mktemp -d)
+# RUNNER_TEMP is emptied after every job, so even a killed job leaves no key behind.
+dir=$(mktemp -d "${RUNNER_TEMP:-/tmp}/vps-deploy.XXXXXX")
 trap 'rm -rf "$dir"' EXIT
 keyfile=$dir/key
 # GitHub stores a secret without its trailing newline, and OpenSSH won't load a key file missing it.
@@ -25,7 +26,7 @@ keyfile=$dir/key
 unset VPS_DEPLOY_KEY
 
 rc=0
-printf '%s\n%s\n' "$VPS_TOKEN" "$VPS_ACTOR" | ssh -T -i "$keyfile" -o IdentitiesOnly=yes -o BatchMode=yes \
+printf '%s\n%s\n' "$VPS_TOKEN" "$VPS_ACTOR" | ssh -F /dev/null -T -i "$keyfile" -o IdentitiesOnly=yes -o BatchMode=yes \
   -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$VPS_KNOWN_HOSTS" -o GlobalKnownHostsFile=/dev/null \
   -o HostKeyAlias=vps -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 \
   -- "$VPS_DEPLOY_USER@$VPS_HOST" "$cmd" || rc=$?
@@ -35,8 +36,8 @@ case $rc in
   2) why="the deploy gate refused this command" ;;
   3) why="compose drift: install the repo's compose on the server (see the message above)" ;;
   75) why="another deploy of this deployment ran past 10 minutes" ;;
-  255) why="ssh failed: connection, host key or deploy key" ;;
-  *) why="the deploy failed on the server (log path above)" ;;
+  255) why="ssh failed: connection, host key or deploy key. If the gate's 'deploying' line is above, the deploy carries on without this job: check its log on the server before re-running" ;;
+  *) why="the deploy didn't happen or failed on the server: the gate's message above says why" ;;
 esac
 echo "::error title=VPS deploy::$why"
 exit "$rc"
