@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# The deploy action's client: asks the VPS deploy gate to redeploy one of this app's deployments. It sends
-# one line, "deploy <target> [<compose sha256>]", and the registry token and actor on stdin, never in argv.
-# The server decides everything else. Inputs arrive as VPS_* environment variables (see action.yml).
+# The deploy job's client (.github/workflows/deploy.yml): asks the VPS deploy gate to redeploy one of this
+# app's deployments. It sends one line, "deploy <target> [<compose sha256>]", and the registry token and actor
+# on stdin, never in argv. The server decides everything else. Inputs arrive as VPS_* environment variables.
 set -euo pipefail
 
 for v in VPS_DEPLOY_KEY VPS_DEPLOY_USER VPS_HOST VPS_TARGET VPS_TOKEN VPS_ACTOR; do
