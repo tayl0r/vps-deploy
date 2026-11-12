@@ -1,0 +1,81 @@
+# The deploy job, shared by every app that deploys to the VPS: an app's workflow calls it, pinned by
+# full commit SHA, after the job that builds and pushes the image. A calling job can't add steps to
+# it, so the deploy key only ever sits in a job that runs this repo's code and nothing else.
+name: deploy
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "The deployment to update: <app> (prod) or <app>-dev"
+        required: true
+        type: string
+      compose:
+        description: "Path, from the app repo's root, to its compose for this deployment; required for an app whose repo keeps one"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      VPS_HOST:
+        required: true
+      VPS_DEPLOY_USER:
+        required: true
+      VPS_DEPLOY_KEY:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # The deploy secrets live only in each app repo's "vps" environment, which only main and prod may use.
+    environment: vps
+    # Longer than the server's own worst case, so a slow deploy fails with the gate's message, not the job's:
+    # up to 10 min waiting behind a running deploy, then up to three 10-min pull attempts, then migrate and up.
+    timeout-minutes: 50
+    permissions:
+      contents: read             # the app repo's compose, when it keeps one
+      packages: read             # the run's token is what the server pulls the image with
+    steps:
+      # The script and host keys come from this workflow's own commit, so the caller's SHA pin covers them.
+      - name: Check this workflow's commit
+        shell: bash
+        env:
+          SHA: ${{ job.workflow_sha }}
+        run: |
+          re='^[0-9a-f]{40}$'
+          if ! [[ $SHA =~ $re ]]; then echo "::error title=VPS deploy::no workflow commit (job.workflow_sha is '$SHA')"; exit 1; fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: tayl0r/vps-deploy
+          ref: ${{ job.workflow_sha }}
+          path: .vps-deploy
+          persist-credentials: false
+
+      - name: Confirm the checkout is that commit
+        shell: bash
+        env:
+          SHA: ${{ job.workflow_sha }}
+        run: |
+          got=$(git -C .vps-deploy rev-parse HEAD)
+          if [ "$got" != "$SHA" ]; then echo "::error title=VPS deploy::checked out $got, not $SHA"; exit 1; fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: inputs.compose != ''
+        with:
+          path: .app
+          sparse-checkout: ${{ inputs.compose }}
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Deploy to the VPS
+        shell: bash
+        run: .vps-deploy/vps-deploy.sh
+        env:
+          VPS_DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
+          VPS_DEPLOY_USER: ${{ secrets.VPS_DEPLOY_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_TARGET: ${{ inputs.target }}
+          VPS_COMPOSE: ${{ inputs.compose != '' && format('.app/{0}', inputs.compose) || '' }}
+          VPS_TOKEN: ${{ github.token }}
+          VPS_ACTOR: ${{ github.actor }}
+          VPS_KNOWN_HOSTS: .vps-deploy/known_hosts

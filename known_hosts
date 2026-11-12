@@ -1,4 +1,4 @@
-# The VPS's SSH host keys, under the alias "vps" (the action passes HostKeyAlias=vps), so the server's
+# The VPS's SSH host keys, under the alias "vps" (the deploy job passes HostKeyAlias=vps), so the server's
 # address stays out of this repo. They are public keys. A change lands in a reviewed diff and reaches an
 # app only when that app bumps its pin. Read on 2026-11-11 from the server's
 # /etc/ssh/ssh_host_{ed25519,rsa}_key.pub over the admin's already-pinned connection; they match the
