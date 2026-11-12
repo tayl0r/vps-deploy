@@ -73,10 +73,12 @@ own token.
 | 2 | The deploy gate refused the command: `target` isn't one of this app's deployments |
 | 3 | Compose drift: the server's compose differs from the repo's. Its admin installs the repo's copy, then the deploy is re-run |
 | 75 | Another deploy of the same deployment ran for more than 10 minutes |
-| 255 | SSH failed: connection, host key or deploy key. If the gate had already printed its `deploying` line, the deploy continues on the server without the job |
+| 255 | SSH failed: connection, host key or deploy key. If the gate had already printed its `deploying` line, the deploy may still finish on the server: check its log there before re-running |
 
 Each failure also prints one `::error` annotation saying which of these it was. A deploy whose image is
-already pulled finishes on the server even if the job is cancelled; one cancelled earlier changes nothing.
+already pulled finishes on the server even if the job is cancelled. One cancelled earlier either still
+finishes or stops before its migration (the run's registry token dies with the job), so read the gate's
+log on the server to see which.
 
 ## The server side
 

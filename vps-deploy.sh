@@ -36,7 +36,7 @@ case $rc in
   2) why="the deploy gate refused this command" ;;
   3) why="compose drift: install the repo's compose on the server (see the message above)" ;;
   75) why="another deploy of this deployment ran past 10 minutes" ;;
-  255) why="ssh failed: connection, host key or deploy key. If the gate's 'deploying' line is above, the deploy carries on without this job: check its log on the server before re-running" ;;
+  255) why="ssh failed: connection, host key or deploy key. If the gate's 'deploying' line is above, the deploy may still finish on the server: check its log there before re-running" ;;
   *) why="the deploy didn't happen or failed on the server: the gate's message above says why" ;;
 esac
 echo "::error title=VPS deploy::$why"

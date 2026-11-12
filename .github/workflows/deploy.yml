@@ -28,7 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     # The deploy secrets live only in each app repo's "vps" environment, which only main and prod may use.
     environment: vps
-    timeout-minutes: 30          # room for the gate's wait (up to 10 min) behind a running deploy
+    # Longer than the server's own worst case, so a slow deploy fails with the gate's message, not the job's:
+    # up to 10 min waiting behind a running deploy, then up to three 10-min pull attempts, then migrate and up.
+    timeout-minutes: 50
     permissions:
       contents: read             # the app repo's compose, when it keeps one
       packages: read             # the run's token is what the server pulls the image with
