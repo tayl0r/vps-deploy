@@ -1,0 +1,24 @@
+name: VPS deploy
+description: Ask the VPS deploy gate to redeploy one of this app's deployments.
+inputs:
+  key:     { description: "The app's deploy key (a secret)", required: true }
+  user:    { description: "The app's deploy account (a secret)", required: true }
+  host:    { description: "The VPS address (a secret)", required: true }
+  target:  { description: "The deployment to update: <app> (prod) or <app>-dev", required: true }
+  compose: { description: "Path, from the repository root, to the repo's compose for this deployment; required for an app whose repo keeps one", required: false, default: "" }
+  token:   { description: "Registry token the VPS pulls with", required: false, default: "${{ github.token }}" }
+  actor:   { description: "Registry user", required: false, default: "${{ github.actor }}" }
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: '"$GITHUB_ACTION_PATH/vps-deploy.sh"'
+      env:
+        VPS_DEPLOY_KEY: ${{ inputs.key }}
+        VPS_DEPLOY_USER: ${{ inputs.user }}
+        VPS_HOST: ${{ inputs.host }}
+        VPS_TARGET: ${{ inputs.target }}
+        VPS_COMPOSE: ${{ inputs.compose }}
+        VPS_TOKEN: ${{ inputs.token }}
+        VPS_ACTOR: ${{ inputs.actor }}
+        VPS_KNOWN_HOSTS: ${{ github.action_path }}/known_hosts
