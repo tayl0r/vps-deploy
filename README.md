@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.repository.private && 'nas' || 'ubuntu-latest' }}
     permissions:
       contents: read
       packages: write
@@ -51,6 +51,12 @@ runs in the build could set that output.
 
 Pin a full commit SHA, with the release tag in a comment, never a movable tag. Bump the pin only after
 reading the diff since your current one: this workflow runs with your deploy key.
+
+## Runners
+
+The deploy job picks its runner from the calling repo's visibility, and the build job above does the same:
+a private repo's jobs run on a self-hosted runner labelled `nas`, registered on that repo; a public repo's
+run on GitHub's runners. A private caller with no `nas` runner registered sees its jobs wait in the queue.
 
 ## Inputs and secrets
 

@@ -4,16 +4,18 @@
 # on stdin, never in argv. The server decides everything else. Inputs arrive as VPS_* environment variables.
 set -euo pipefail
 
+fail() { echo "::error title=VPS deploy::$*"; exit 1; }
+
 for v in VPS_DEPLOY_KEY VPS_DEPLOY_USER VPS_HOST VPS_TARGET VPS_TOKEN VPS_ACTOR; do
-  if [ -z "${!v:-}" ]; then echo "::error title=VPS deploy::$v is empty"; exit 1; fi
+  if [ -z "${!v:-}" ]; then fail "$v is empty"; fi
 done
 target_re='^[a-z0-9-]{1,64}$'   # the gate's own form
-if ! [[ $VPS_TARGET =~ $target_re ]]; then echo "::error title=VPS deploy::target must be <app> or <app>-dev"; exit 1; fi
-if [ ! -s "$VPS_KNOWN_HOSTS" ]; then echo "::error title=VPS deploy::no pinned host keys at $VPS_KNOWN_HOSTS"; exit 1; fi
+if ! [[ $VPS_TARGET =~ $target_re ]]; then fail "target must be <app> or <app>-dev"; fi
+if [ ! -s "$VPS_KNOWN_HOSTS" ]; then fail "no pinned host keys at $VPS_KNOWN_HOSTS"; fi
 
 cmd="deploy $VPS_TARGET"
 if [ -n "${VPS_COMPOSE:-}" ]; then
-  if [ ! -f "$VPS_COMPOSE" ]; then echo "::error title=VPS deploy::no compose file at $VPS_COMPOSE"; exit 1; fi
+  if [ ! -f "$VPS_COMPOSE" ]; then fail "no compose file at $VPS_COMPOSE"; fi
   cmd+=" $(sha256sum -- "$VPS_COMPOSE" | cut -d' ' -f1)"
 fi
 
