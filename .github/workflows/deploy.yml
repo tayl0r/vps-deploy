@@ -25,7 +25,9 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    # A private caller's jobs run on its own self-hosted runner, labelled `nas`; a public caller's on GitHub's
+    # runners. In a reusable workflow, `github` is the caller's context.
+    runs-on: ${{ github.event.repository.private && 'nas' || 'ubuntu-latest' }}
     # The deploy secrets live only in each app repo's "vps" environment, which only main and prod may use.
     environment: vps
     # Longer than the server's own worst case, so a slow deploy fails with the gate's message, not the job's:
@@ -34,10 +36,12 @@ jobs:
     permissions:
       contents: read             # the app repo's compose, when it keeps one
       packages: read             # the run's token is what the server pulls the image with
+    defaults:
+      run:
+        shell: bash
     steps:
       # The script and host keys come from this workflow's own commit, so the caller's SHA pin covers them.
       - name: Check this workflow's commit
-        shell: bash
         env:
           SHA: ${{ job.workflow_sha }}
         run: |
@@ -52,7 +56,6 @@ jobs:
           persist-credentials: false
 
       - name: Confirm the checkout is that commit
-        shell: bash
         env:
           SHA: ${{ job.workflow_sha }}
         run: |
@@ -68,7 +71,6 @@ jobs:
           persist-credentials: false
 
       - name: Deploy to the VPS
-        shell: bash
         run: .vps-deploy/vps-deploy.sh
         env:
           VPS_DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
