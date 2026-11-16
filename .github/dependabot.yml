@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily   # a pinned action gets no security-update PRs, so this is how its fixes arrive
+    cooldown:
+      default-days: 7   # compromised releases are usually pulled within hours
