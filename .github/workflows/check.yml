@@ -1,7 +1,8 @@
 name: check
 
+# No pull_request trigger: no repo runs CI on pull requests (checks run locally before a PR); main's push still
+# shellchecks what landed.
 on:
-  pull_request:
   push:
     branches: [main]
 
